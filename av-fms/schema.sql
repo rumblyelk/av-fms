@@ -14,5 +14,5 @@ CREATE TABLE vehicle (
     manufacturer TEXT NOT NULL,
     user_id INTEGER,
     -- user_id is this is the user who took the vehicle (if available == False)
-    available BOOLEAN NOT NULL
+    available BOOLEAN NOT NULL DEFAULT True
 );

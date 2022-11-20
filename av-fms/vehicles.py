@@ -7,7 +7,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from .db import get_db
 
-bp = Blueprint('vehicles', __name__)
+bp = Blueprint('vehicles', __name__, url_prefix='/vehicles')
 
 
 @bp.route('/')
@@ -18,6 +18,40 @@ def index():
     ).fetchall()
     create_staff_user()
     return render_template('vehicles/index.html', vehicles=vehicles)
+
+
+@bp.route('/create', methods=('GET', 'POST'))
+def create():
+    if request.method == 'POST':
+        man = request.form['manufacturer']
+        lpn = request.form['license_plate_number']
+
+        db = get_db()
+        error = None
+        if not man:
+            error = 'Manufacturer is required.'
+        elif not lpn:
+            error = 'License plate number is required.'
+
+        if error is None:
+            try:
+                db.execute(
+                    'INSERT INTO vehicle (manufacturer, license_plate_number) VALUES (?, ?)',
+                    (man, lpn)
+                )
+                db.commit()
+            except db.IntegrityError as e:
+                flash(e)
+                error = f'Vehicle "{lpn}" is already registered.'
+            else:
+                return redirect(url_for('vehicles.index'))
+
+        if error is not None:
+            flash(error)
+        else:
+            flash('Vehicle successfully created.')
+
+    return render_template('vehicles/create.html')
 
 
 def create_staff_user():
