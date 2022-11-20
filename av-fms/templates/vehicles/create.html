@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<h1>{% block title %}Create a new vehicle{% endblock %}</h1>
+<a class="action" href="{{ url_for('vehicles.index') }}">Back</a>
+{% endblock %}
+
+{% block content %}
+<form method="post">
+    <label for="manufacturer">manufacturer</label>
+    <input name="manufacturer" id="manufacturer" required>
+    <label for="license_plate_number">license_plate_number</label>
+    <input name="license_plate_number" id="license_plate_number" required>
+    <input type="submit" value="Register">
+</form>
+{% endblock %}
