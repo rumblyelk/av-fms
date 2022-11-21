@@ -12,18 +12,17 @@
 <article class="vehicle">
     <header>
         <div>
-            <h1>{{ v['manufacturer'] }} | {{ v['license_plate_number'] }}</h1>
+            <h1>{{ v.manufacturer }} | {{ v.license_plate_number }}</h1>
             {% if v.available == True %}
-            <a class="action" href="{{ url_for('vehicles.take', id=v['id']) }}">Take</a>
-            <a class="action" href="{{ url_for('vehicles.history', id=v['id']) }}">Vehicle History</a>
+            <a class="action" href="{{ url_for('vehicles.take_vehicle', vid=v.id) }}">Take</a>
             {% else %}
-            {% if v.user_id is not None and v.user_id == g.user.id %}
-            <a class="action" href="{{ url_for('vehicles.return', id=v['id']) }}">Return</a>
+            {% if v.user_id == g.user.id %}
+            <a class="action" href="{{ url_for('vehicles.return_vehicle', vid=v.id) }}">Return</a>
             {% else %}
-            <p>Taken by "username".</p>
-            <a class="action" href="{{ url_for('vehicles.history', id=v['id']) }}">Vehicle History</a>
+            <p>Taken by {{ users[v.user_id].username }}.</p>
             {% endif %}
             {% endif %}
+            <a class="action" href="{{ url_for('vehicles.task_history', vid=v.id) }}">Task History</a>
         </div>
     </header>
 </article>
