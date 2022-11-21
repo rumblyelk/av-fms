@@ -13,8 +13,15 @@ bp = Blueprint('vehicles', __name__, url_prefix='/vehicles')
 @bp.route('/')
 def index():
     vehicles = Vehicle.query.all()
+    users = {
+        user.id: user for user in
+        User.query.filter(User.id.in_(
+            [vehicle.user_id for vehicle in vehicles if vehicle.user_id]
+        ))
+        .all()
+    }
     create_staff_user()
-    return render_template('vehicles/index.html', vehicles=vehicles)
+    return render_template('vehicles/index.html', vehicles=vehicles, users=users)
 
 
 @bp.route('/create', methods=('GET', 'POST'))
@@ -45,6 +52,28 @@ def create():
             flash('Vehicle successfully created.')
 
     return render_template('vehicles/create.html')
+
+
+@bp.route('/take_vehicle', methods=('GET', 'POST'))
+def take_vehicle():
+    vid = request.args.get('vid')
+    vehicle = Vehicle.query.filter_by(id=vid).first()
+    vehicle.user_id = g.user.id
+    vehicle.available = False
+    db.session.commit()
+
+    return redirect(url_for('vehicles.index'))
+
+
+@bp.route('/return_vehicle', methods=('GET', 'POST'))
+def return_vehicle():
+    vid = request.args.get('vid')
+    vehicle = Vehicle.query.filter_by(id=vid).first()
+    vehicle.user_id = None
+    vehicle.available = True
+    db.session.commit()
+
+    return redirect(url_for('vehicles.index'))
 
 
 def create_staff_user():
