@@ -5,17 +5,14 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from .db import get_db
+from .models import db, Vehicle, User
 
 bp = Blueprint('vehicles', __name__, url_prefix='/vehicles')
 
 
 @bp.route('/')
 def index():
-    db = get_db()
-    vehicles = db.execute(
-        'SELECT * FROM vehicle'
-    ).fetchall()
+    vehicles = Vehicle.query.all()
     create_staff_user()
     return render_template('vehicles/index.html', vehicles=vehicles)
 
@@ -26,7 +23,6 @@ def create():
         man = request.form['manufacturer']
         lpn = request.form['license_plate_number']
 
-        db = get_db()
         error = None
         if not man:
             error = 'Manufacturer is required.'
@@ -35,13 +31,10 @@ def create():
 
         if error is None:
             try:
-                db.execute(
-                    'INSERT INTO vehicle (manufacturer, license_plate_number) VALUES (?, ?)',
-                    (man, lpn)
-                )
-                db.commit()
-            except db.IntegrityError as e:
-                flash(e)
+                new_vehicle = Vehicle(man, lpn)
+                db.session.add(new_vehicle)
+                db.session.commit()
+            except Exception:
                 error = f'Vehicle "{lpn}" is already registered.'
             else:
                 return redirect(url_for('vehicles.index'))
@@ -62,13 +55,10 @@ def create_staff_user():
         username: staffUser
         password: staffpass
     """
-    db = get_db()
-    user = db.execute(
-        'SELECT * FROM user WHERE username = ?', ('staffUser',)
-    ).fetchone()
-    if user is None:
-        db.execute(
-            'INSERT INTO user (username, password, role) VALUES (?, ?, ?)',
-            ('staffUser', generate_password_hash('staffpass'), 'STAFF')
-        )
-        db.commit()
+    staff_user = User.query.filter_by(username='staffUser').first()
+
+    if staff_user is None:
+        staff_user = User(username='staffUser', password=generate_password_hash(
+            'staffpass'), role='STAFF')
+        db.session.add(staff_user)
+        db.session.commit()
