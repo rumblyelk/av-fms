@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<h1>Task history - {% block title %}{{ vehicle.manufacturer }} | {{ vehicle.license_plate_number }}{% endblock %}</h1>
+{% if g.user.role == 'STAFF' %}
+<a class="action" href="{{ url_for('vehicles.index') }}">Back</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+{% for t in tasks %}
+<article class="task">
+    <header>
+        <div>
+            <h1>Taken by {{ users[t.user_id].username }} at {{ t.start_time }}.</h1>
+            {% if t.end_time %}
+            <p>Returned at {{ t.end_time }}.</p>
+            {% else %}
+            <p>Not yet returned.</p>
+            {% endif %}
+        </div>
+    </header>
+</article>
+{% if not loop.last %}
+<hr>
+{% endif %}
+{% endfor %}
+{% endblock %}
