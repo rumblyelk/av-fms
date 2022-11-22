@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+import datetime
 
 db = SQLAlchemy()
 
@@ -29,3 +30,19 @@ class Vehicle(db.Model):
         self.license_plate_number = license_plate_number
         self.user_id = user_id
         self.available = available
+
+
+class VehicleTask(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    vehicle_id = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, nullable=False)
+    completed = db.Column(db.Boolean, unique=False,
+                          nullable=False, default=False)
+    start_time = db.Column(db.DateTime, nullable=False)
+    end_time = db.Column(db.DateTime, nullable=True)
+
+    def __init__(self, vehicle_id, user_id, start_time=datetime.datetime.now(), end_time=None):
+        self.vehicle_id = vehicle_id
+        self.user_id = user_id
+        self.start_time = start_time
+        self.end_time = end_time

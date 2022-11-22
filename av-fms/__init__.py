@@ -6,7 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
-    app.secret_key = 'helloj'
+    app.secret_key = 'hello'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///av-fms.sqlite3'
 
     from .models import db
@@ -23,10 +23,6 @@ def create_app(test_config=None):
         os.makedirs(app.instance_path)
     except OSError:
         pass
-
-    @app.route('/hello')
-    def hello():
-        return 'Hello, World!'
 
     from . import auth
     app.register_blueprint(auth.bp)

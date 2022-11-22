@@ -1,3 +1,4 @@
+import datetime
 import functools
 
 from flask import (
@@ -5,7 +6,7 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from .models import db, Vehicle, User
+from .models import db, Vehicle, User, VehicleTask
 
 bp = Blueprint('vehicles', __name__, url_prefix='/vehicles')
 
@@ -17,8 +18,7 @@ def index():
         user.id: user for user in
         User.query.filter(User.id.in_(
             [vehicle.user_id for vehicle in vehicles if vehicle.user_id]
-        ))
-        .all()
+        )).all()
     }
     create_staff_user()
     return render_template('vehicles/index.html', vehicles=vehicles, users=users)
@@ -46,7 +46,7 @@ def create():
             else:
                 return redirect(url_for('vehicles.index'))
 
-        if error is not None:
+        if error:
             flash(error)
         else:
             flash('Vehicle successfully created.')
@@ -56,11 +56,25 @@ def create():
 
 @bp.route('/take_vehicle', methods=('GET', 'POST'))
 def take_vehicle():
-    vid = request.args.get('vid')
-    vehicle = Vehicle.query.filter_by(id=vid).first()
-    vehicle.user_id = g.user.id
-    vehicle.available = False
-    db.session.commit()
+    error = None
+    user_vehicle = Vehicle.query.filter_by(
+        user_id=g.user.id).first()
+    if user_vehicle:
+        error = f'You already have taken the {user_vehicle.manufacturer} | {user_vehicle.license_plate_number}.'
+
+    if error is None:
+        vid = request.args.get('vid')
+
+        vehicle = Vehicle.query.filter_by(id=vid).first()
+        vehicle.user_id = g.user.id
+        vehicle.available = False
+
+        new_task = VehicleTask(vehicle_id=vehicle.id, user_id=g.user.id)
+        db.session.add(new_task)
+        db.session.commit()
+
+    if error:
+        flash(error)
 
     return redirect(url_for('vehicles.index'))
 
@@ -68,12 +82,37 @@ def take_vehicle():
 @bp.route('/return_vehicle', methods=('GET', 'POST'))
 def return_vehicle():
     vid = request.args.get('vid')
+
     vehicle = Vehicle.query.filter_by(id=vid).first()
     vehicle.user_id = None
     vehicle.available = True
+
+    task = VehicleTask.query.filter_by(
+        vehicle_id=vid,
+        end_time=None,
+    ).order_by(VehicleTask.start_time.desc()).first()
+    task.end_time = datetime.datetime.now()
     db.session.commit()
 
     return redirect(url_for('vehicles.index'))
+
+
+@bp.route('/task_history', methods=('GET', 'POST'))
+def task_history():
+    vid = request.args.get('vid')
+
+    vehicle = Vehicle.query.filter_by(id=vid).first()
+
+    tasks = VehicleTask.query.filter_by(vehicle_id=vid).all()
+
+    users = {
+        user.id: user for user in
+        User.query.filter(User.id.in_(
+            [task.user_id for task in tasks]
+        )).all()
+    }
+
+    return render_template('vehicles/task_history.html', vehicle=vehicle, tasks=tasks, users=users)
 
 
 def create_staff_user():
