@@ -7,7 +7,9 @@
     Flask 2.2.2
     Werkzeug 2.2.2
 
-## Initizalizing the Database:
-To initialize the database, run the following command:
+## Starting the App
+From within the project directory, run the following line in:
 
-    $ flask --app av-fms init-db
+    $ flask --app av-fms --debug run
+    
+The DB will be initialized automatically.
