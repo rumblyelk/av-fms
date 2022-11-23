@@ -23,6 +23,9 @@
             {% endif %}
             {% endif %}
             <a class="action" href="{{ url_for('vehicles.task_history', vid=v.id) }}">Task History</a>
+            {% if g.user.role == 'STAFF' %}
+            <a class="action" href="{{ url_for('vehicles.delete', vid=v.id) }}">DELETE</a>
+            {% endif %}
         </div>
     </header>
 </article>

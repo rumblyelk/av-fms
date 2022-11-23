@@ -56,11 +56,15 @@ def create():
 
 @bp.route('/delete', methods=('GET', 'POST'))
 def delete():
+    """
+    An optional additional action that may need to be added would be to delete the Tasks associated with a Vehicle as well.
+    """
     error = None
     if g.user.role != 'STAFF':
         error = "You are not authorized to perform this action."
 
-    vehicle = Vehicle.query.filter_by(id=id).first()
+    vid = request.args.get('vid')
+    vehicle = Vehicle.query.filter_by(id=vid).first()
 
     if error is None:
         try:
