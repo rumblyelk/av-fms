@@ -54,6 +54,29 @@ def create():
     return render_template('vehicles/create.html')
 
 
+@bp.route('/delete', methods=('GET', 'POST'))
+def delete():
+    error = None
+    if g.user.role != 'STAFF':
+        error = "You are not authorized to perform this action."
+
+    vehicle = Vehicle.query.filter_by(id=id).first()
+
+    if error is None:
+        try:
+            db.session.delete(vehicle)
+            db.session.commit()
+        except Exception:
+            error = "Vehicle could not be deleted."
+        else:
+            return redirect(url_for('vehicles.index'))
+
+    if error:
+        flash(error)
+
+    return render_template('vehicles/index.html')
+
+
 @bp.route('/take_vehicle', methods=('GET', 'POST'))
 def take_vehicle():
     error = None
