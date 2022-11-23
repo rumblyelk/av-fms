@@ -1,12 +1,10 @@
 import os
 
-from flask import Flask, g
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask
 
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
-    app.secret_key = 'hello'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///av-fms.sqlite3'
 
     from .models import db
@@ -29,5 +27,9 @@ def create_app(test_config=None):
 
     from . import vehicles
     app.register_blueprint(vehicles.bp)
+
+    from . import api
+    app.register_blueprint(api.bp)
+    app.secret_key = api.secret_key
 
     return app
