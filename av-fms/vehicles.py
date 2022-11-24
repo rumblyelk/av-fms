@@ -8,11 +8,15 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from .models import db, Vehicle, User, VehicleTask
 
+
 bp = Blueprint('vehicles', __name__, url_prefix='/vehicles')
 
 
 @bp.route('/')
 def index():
+    if not g.user:
+        return redirect(url_for('auth.login'))
+
     vehicles = Vehicle.query.all()
     users = {
         user.id: user for user in
@@ -26,6 +30,9 @@ def index():
 
 @bp.route('/create', methods=('GET', 'POST'))
 def create():
+    if not g.user:
+        return redirect(url_for('auth.login'))
+
     if request.method == 'POST':
         error = None
         if g.user.role != 'STAFF':
@@ -62,6 +69,9 @@ def delete():
     """
     An optional additional action that may need to be added would be to delete the Tasks associated with a Vehicle as well.
     """
+    if not g.user:
+        return redirect(url_for('auth.login'))
+
     error = None
     if g.user.role != 'STAFF':
         error = "You are not authorized to perform this action."
@@ -86,6 +96,9 @@ def delete():
 
 @bp.route('/take_vehicle', methods=('GET', 'POST'))
 def take_vehicle():
+    if not g.user:
+        return redirect(url_for('auth.login'))
+
     error = None
     user_vehicle = Vehicle.query.filter_by(
         user_id=g.user.id).first()
@@ -111,6 +124,9 @@ def take_vehicle():
 
 @bp.route('/return_vehicle', methods=('GET', 'POST'))
 def return_vehicle():
+    if not g.user:
+        return redirect(url_for('auth.login'))
+
     vid = request.args.get('vid')
 
     vehicle = Vehicle.query.filter_by(id=vid).first()
@@ -138,6 +154,9 @@ def return_vehicle():
 
 @bp.route('/task_history', methods=('GET', 'POST'))
 def task_history():
+    if not g.user:
+        return redirect(url_for('auth.login'))
+
     vid = request.args.get('vid')
 
     vehicle = Vehicle.query.filter_by(id=vid).first()
