@@ -57,7 +57,36 @@ def token_required(f):
 @bp.route('/vehicles', methods=['GET'])
 @token_required
 def vehicles_index(current_user):
-    vehicles = Vehicle.query.all()  # TODO: add some pagination
+    """
+    This endpoint cant contain an optional 'filter' parameter in the request body of the form:
+    {
+        "filter": {
+            "param": string,
+            "value": appropriate value for the param
+        }
+    }
+    """
+    # TODO: add some pagination
+
+    query_filter = request.get_json().get('filter')
+    if not query_filter.get('param') or not query_filter.get('value'):
+        vehicles = Vehicle.query.all()
+    elif query_filter.get('param') not in ['manufacturer', 'license_plate_number', 'available']:
+        return make_response(jsonify({"message": f'Invalid filter parameter `{query_filter.get("column")}`!'}), 400)
+    else:
+        try:
+            if query_filter.get('param') == 'manufacturer':
+                vehicles = Vehicle.query.filter_by(
+                    manufacturer=query_filter.get('value')).all()
+            elif query_filter.get('param') == 'license_plate_number':
+                vehicles = Vehicle.query.filter_by(
+                    license_plate_number=query_filter.get('value')).all()
+            elif query_filter.get('param') == 'available':
+                vehicles = Vehicle.query.filter_by(
+                    available=query_filter.get('value')).all()
+        except:
+            return make_response(jsonify({"message": "Invalid filter value!"}), 400)
+
     users = {
         user.id: user for user in
         User.query.filter(User.id.in_(
