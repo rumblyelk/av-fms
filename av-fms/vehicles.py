@@ -27,10 +27,13 @@ def index():
 @bp.route('/create', methods=('GET', 'POST'))
 def create():
     if request.method == 'POST':
+        error = None
+        if g.user.role != 'STAFF':
+            error = 'You do not have permission to create vehicles.'
+
         man = request.form['manufacturer']
         lpn = request.form['license_plate_number']
 
-        error = None
         if not man:
             error = 'Manufacturer is required.'
         elif not lpn:
@@ -111,15 +114,24 @@ def return_vehicle():
     vid = request.args.get('vid')
 
     vehicle = Vehicle.query.filter_by(id=vid).first()
-    vehicle.user_id = None
-    vehicle.available = True
 
-    task = VehicleTask.query.filter_by(
-        vehicle_id=vid,
-        end_time=None,
-    ).order_by(VehicleTask.start_time.desc()).first()
-    task.end_time = datetime.datetime.now()
-    db.session.commit()
+    error = None
+    if g.user.id != vehicle.user_id:
+        error = "Only the user who took the vehicle can return it."
+
+    if error is None:
+        vehicle.user_id = None
+        vehicle.available = True
+
+        task = VehicleTask.query.filter_by(
+            vehicle_id=vid,
+            end_time=None,
+        ).order_by(VehicleTask.start_time.desc()).first()
+        task.end_time = datetime.datetime.now()
+        db.session.commit()
+
+    if error:
+        flash(error)
 
     return redirect(url_for('vehicles.index'))
 
