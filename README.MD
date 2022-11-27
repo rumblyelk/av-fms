@@ -13,6 +13,7 @@ From within the project directory, run the following line:
     $ pip install -r requirements.txt
 
 Once dependancies are installed (which may require adding `--no-deps`), run the following to start the server:
+    
     $ flask --app av-fms --debug run
     
 The DB will be initialized automatically.
