@@ -54,6 +54,34 @@ def token_required(f):
     return decorator
 
 
+@bp.route('/register', methods=['POST'])
+def register():
+    """
+    This endpoint takes a username and password in the message body and creates a new user in the database. The message body should look like:
+    {
+        "username": string,
+        "password": string
+    }
+    """
+    try:
+        username = request.get_json().get('username')
+        password = request.get_json().get('password')
+        if not username or not password:
+            return make_response(jsonify({"message": "Username and password are required!"}), 400)
+    except:
+        return make_response(jsonify({"message": "Improperly formatted request body!"}), 400)
+
+    try:
+        user = User(username=username,
+                    password=generate_password_hash(password))
+        db.session.add(user)
+        db.session.commit()
+    except Exception:
+        return make_response(jsonify({"message": "User already exists."}), 400)
+
+    return make_response(jsonify({"message": "User created successfully."}), 201)
+
+
 @bp.route('/vehicles', methods=['GET'])
 @token_required
 def vehicles_index(current_user):
