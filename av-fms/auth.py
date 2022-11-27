@@ -50,6 +50,8 @@ def register():
 
 @bp.route('/login', methods=('GET', 'POST'))
 def login():
+    create_staff_user()
+
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -86,3 +88,20 @@ def login_required(view):
         return view(**kwargs)
 
     return wrapped_view
+
+
+def create_staff_user():
+    """
+    Since this whole system is a demo, this code is here to provide a staff user for testing.
+    After starting the app for the first time, the ability to log in with a staff role with
+    the following credentials will be available:
+        username: staffUser
+        password: staffpass
+    """
+    staff_user = User.query.filter_by(username='staffUser').first()
+
+    if staff_user is None:
+        staff_user = User(username='staffUser', password=generate_password_hash(
+            'staffpass'), role='STAFF')
+        db.session.add(staff_user)
+        db.session.commit()

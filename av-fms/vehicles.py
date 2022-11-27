@@ -24,7 +24,6 @@ def index():
             [vehicle.user_id for vehicle in vehicles if vehicle.user_id]
         )).all()
     }
-    create_staff_user()
     return render_template('vehicles/index.html', vehicles=vehicles, users=users)
 
 
@@ -171,20 +170,3 @@ def task_history():
     }
 
     return render_template('vehicles/task_history.html', vehicle=vehicle, tasks=tasks, users=users)
-
-
-def create_staff_user():
-    """
-    Since this whole system is a demo, this code is here to provide a staff user for testing.
-    After creating a normal user for the first time and loading the vehicles page, the ability
-    to log in with a staff role with the following credentials will be available:
-        username: staffUser
-        password: staffpass
-    """
-    staff_user = User.query.filter_by(username='staffUser').first()
-
-    if staff_user is None:
-        staff_user = User(username='staffUser', password=generate_password_hash(
-            'staffpass'), role='STAFF')
-        db.session.add(staff_user)
-        db.session.commit()
