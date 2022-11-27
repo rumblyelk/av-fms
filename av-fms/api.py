@@ -160,7 +160,7 @@ def return_vehicle(current_user, id):
     return make_response(jsonify({"message": "Vehicle returned successfully."}), 200)
 
 
-@bp.route('/vehicles/<int:id>/create', methods=['POST'])
+@bp.route('/vehicles/create', methods=['POST'])
 @token_required
 def create(current_user):
     if current_user.role != 'STAFF':
