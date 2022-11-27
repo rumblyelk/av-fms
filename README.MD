@@ -30,17 +30,25 @@ To login with as a staff user with full privileges, simply go to `localhost:5000
 
 ## API Login, Authentication, and Docs
 
-Before sending any requests to the API, a toekn must be obtained. This is done with the `api/login` endpoint. All requests must contain the `"Content-Type": "application/json"` header. After obtaining an API token, it should be put in the header as `"x-access-token": token`.
+Before sending any requests to the API (aside from requests to `api/register`), a token must be obtained. This is done with the `api/login` endpoint. All requests must contain the `"Content-Type": "application/json"` header. After obtaining an API token, it should be put in the header as `"x-access-token": token`.
 
-#### > `/api/login`
-Included in the body should be one's username and password as follows:
+### > `/api/register`
+This endpoint takes a username and password in the message body and creates a new user in the database. The message body should look like:
 ```json
 {
     "username": string,
     "password": string
 }
 ```
-if authenticated, the server will return an API token for future authentication.
+
+#### > `/api/login`
+This endpoint takes a username and password in the message body and authenticates the user, returning an API token for use with other endpoints if authenticated. The message body should look like this:
+```json
+{
+    "username": string,
+    "password": string
+}
+```
 
 #### > `/api/vehicles`
 This will return a list of all vehicle objects, each one serialized in JSON as:
