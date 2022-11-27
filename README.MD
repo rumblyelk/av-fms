@@ -20,9 +20,9 @@ The DB will be initialized automatically.
 
 ## Logging in and Staff Privileges
 
-Once the server is running, navigate to `localhost:5000/register` to create an account. After the account has been created, login with the credentials that you just created.
+Once the server is running, navigate to `localhost:5000/auth/register` to create an account. After the account has been created, login with the credentials that you just created.
 
-Once one login has been performed, the server will automatically generate a staff user for testing purposes. The staff user is able to add or delete vehicles. The login info for the staff user is:
+To login with as a staff user with full privileges, simply go to `localhost:5000/auth/login`. The server will automatically generate a staff user for testing purposes. The staff user is able to add or delete vehicles. The login info for the staff user is:
     
     username: staffUser
     password: staffpass
