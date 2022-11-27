@@ -52,12 +52,13 @@ This will return a list of all vehicle objects, each one serialized in JSON as:
     "available": bool,
 }
 ```
-An optional filter parameter is allowed in the request body as well, in the form of:
+Any combination of optional filter parameters are allowed in the request body as well, in the form of:
 ```json
 {
     "filter": {
-        "param": string,
-        "value": appropriate value for the param
+        "manufacturer": string,
+        "license_plate_number": string,
+        "available": bool
     }
 }
 ```
@@ -65,8 +66,9 @@ For example, if a user wished to see only Mercedes vehicles, the following filte
 ```json
 {
     "filter": {
-        "param": "manufacturer",
-        "value": "Mercedes"
+        "manufacturer": "Ford",
+        "license_plate_number": "1234567",
+        "available": true
     }
 }
 ```
