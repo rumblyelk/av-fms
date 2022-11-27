@@ -60,32 +60,27 @@ def vehicles_index(current_user):
     """
     This endpoint cant contain an optional 'filter' parameter in the request body of the form:
     {
-        "filter": {
-            "param": string,
-            "value": appropriate value for the param
+       "filter": {
+            "manufacturer": string,
+            "license_plate_number": string,
+            "available": bool
         }
     }
     """
-    # TODO: add some pagination
+    # TODO: add some pagination (or find out if Flask autopaginates)
 
-    query_filter = request.get_json().get('filter')
-    if not query_filter.get('param') or not query_filter.get('value'):
-        vehicles = Vehicle.query.all()
-    elif query_filter.get('param') not in ['manufacturer', 'license_plate_number', 'available']:
-        return make_response(jsonify({"message": f'Invalid filter parameter `{query_filter.get("column")}`!'}), 400)
+    try:
+        filters = request.get_json().get('filter')
+    except:
+        filters = None
+
+    if filters:
+        if filters.keys() - {'manufacturer', 'license_plate_number', 'available'}:
+            return make_response(jsonify({"message": "Invalid filter!"}), 400)
+
+        vehicles = Vehicle.query.filter_by(**filters).all()
     else:
-        try:
-            if query_filter.get('param') == 'manufacturer':
-                vehicles = Vehicle.query.filter_by(
-                    manufacturer=query_filter.get('value')).all()
-            elif query_filter.get('param') == 'license_plate_number':
-                vehicles = Vehicle.query.filter_by(
-                    license_plate_number=query_filter.get('value')).all()
-            elif query_filter.get('param') == 'available':
-                vehicles = Vehicle.query.filter_by(
-                    available=query_filter.get('value')).all()
-        except:
-            return make_response(jsonify({"message": "Invalid filter value!"}), 400)
+        vehicles = Vehicle.query.all()
 
     users = {
         user.id: user for user in
@@ -129,7 +124,7 @@ def take_vehicle(current_user, id):
     vehicle.user_id = current_user.id
     vehicle.available = False
 
-    new_task = VehicleTask(vehicle_id=vehicle.id, user_id=g.user.id)
+    new_task = VehicleTask(vehicle_id=vehicle.id, user_id=current_user.id)
     db.session.add(new_task)
     db.session.commit()
 
@@ -189,7 +184,7 @@ def create(current_user):
 
 @bp.route('/vehicles/<int:id>/delete', methods=['DELETE'])
 @token_required
-def delete(current_user):
+def delete(current_user, id):
     if current_user.role != 'STAFF':
         return make_response(jsonify({"message": "You are not authorized to perform this action."}), 401)
 
