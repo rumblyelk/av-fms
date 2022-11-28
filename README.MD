@@ -32,7 +32,7 @@ To login with as a staff user with full privileges, simply go to `localhost:5000
 
 Before sending any requests to the API (aside from requests to `api/register`), a token must be obtained. This is done with the `api/login` endpoint. All requests must contain the `"Content-Type": "application/json"` header. After obtaining an API token, it should be put in the header as `"x-access-token": token`.
 
-### > `/api/register`
+#### > `/api/register`
 This endpoint takes a username and password in the message body and creates a new user in the database. The message body should look like:
 ```json
 {
