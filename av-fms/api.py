@@ -63,6 +63,8 @@ def register():
         "password": string
     }
     """
+    create_staff_user()
+
     try:
         username = request.get_json().get('username')
         password = request.get_json().get('password')
@@ -110,44 +112,30 @@ def vehicles_index(current_user):
     else:
         vehicles = Vehicle.query.all()
 
-    users = {
-        user.id: user for user in
-        User.query.filter(User.id.in_(
-            [vehicle.user_id for vehicle in vehicles if vehicle.user_id]
-        )).all()
-    }
-
-    vs = []
-    for v in vehicles:
-        d = {
-            "id": v.id,
-            "manufacturer": v.manufacturer,
-            "license_plate_number": v.license_plate_number,
-            "available": v.available,
-        }
-        if v.available is False:
-            d['taken_by'] = users[v.user_id].username
-        vs.append(d)
+    vs = [{
+        "id": v.id,
+        "manufacturer": v.manufacturer,
+        "license_plate_number": v.license_plate_number,
+        "available": v.available,
+        "taken_by": v.user.username if v.available is False else None
+    } for v in vehicles]
 
     return make_response(jsonify({"vehicles": vs}), 200)
 
 
-@bp.route('/vehicles/<int:id>/take', methods=['POST'])
-@token_required
+@ bp.route('/vehicles/<int:id>/take', methods=['POST'])
+@ token_required
 def take_vehicle(current_user, id):
-    user_has_taken_vehicle = True if Vehicle.query.filter_by(
-        user_id=current_user.id).first() else False
     vehicle = Vehicle.query.filter_by(id=id).first()
 
-    if user_has_taken_vehicle:
+    if current_user.vehicle:
         return make_response(jsonify(
             {"message": f'You already have taken a vehicle. A user can only take one vehicle at a time.'}),
             406)
     if not vehicle:
         return make_response(jsonify({"message": "Vehicle not found."}), 404)
     if vehicle.available is False:
-        username = User.query.filter_by(id=vehicle.user_id).first().username
-        return make_response(jsonify({"message": f'Vehicle is already taken by {username}.'}), 406)
+        return make_response(jsonify({"message": f'Vehicle is already taken by {vehicle.user.username}.'}), 406)
 
     vehicle.user_id = current_user.id
     vehicle.available = False
@@ -159,10 +147,11 @@ def take_vehicle(current_user, id):
     return make_response(jsonify({"message": "Vehicle taken successfully."}), 200)
 
 
-@bp.route('/vehicles/<int:id>/return', methods=['POST'])
-@token_required
+@ bp.route('/vehicles/<int:id>/return', methods=['POST'])
+@ token_required
 def return_vehicle(current_user, id):
     vehicle = Vehicle.query.filter_by(id=id).first()
+
     if not vehicle:
         return make_response(jsonify({"message": "Vehicle not found."}), 404)
     if vehicle.available is True:
@@ -173,6 +162,8 @@ def return_vehicle(current_user, id):
     vehicle.user_id = None
     vehicle.available = True
 
+    # The reason that I kept this query instead of something like `vehicle.tasks[-1] is because the order of
+    # the tasks is not guaranteed. Ordering as part of the query is more efficient than sorting in Python.
     task = VehicleTask.query.filter_by(
         vehicle_id=vehicle.id,
         end_time=None,
@@ -183,15 +174,20 @@ def return_vehicle(current_user, id):
     return make_response(jsonify({"message": "Vehicle returned successfully."}), 200)
 
 
-@bp.route('/vehicles/create', methods=['POST'])
-@token_required
+@ bp.route('/vehicles/create', methods=['POST'])
+@ token_required
 def create(current_user):
     if current_user.role != 'STAFF':
         return make_response(jsonify({"message": "You are not authorized to perform this action."}), 401)
 
-    req = request.get_json()
-    man = req.get('manufacturer')
-    lpn = req.get('license_plate_number')
+    try:
+        man = request.get_json().get('manufacturer')
+        lpn = request.get_json().get('license_plate_number')
+
+        if not man or not lpn:
+            return make_response(jsonify({"message": "Request body must contain manufacturer and license_plate_number."}), 400)
+    except:
+        return make_response(jsonify({"message": "Improperly formatted request body!"}), 400)
 
     vehicle = Vehicle.query.filter_by(
         manufacturer=man, license_plate_number=lpn
@@ -210,8 +206,8 @@ def create(current_user):
     return make_response(jsonify({"message": "Vehicle created successfully."}), 200)
 
 
-@bp.route('/vehicles/<int:id>/delete', methods=['DELETE'])
-@token_required
+@ bp.route('/vehicles/<int:id>/delete', methods=['DELETE'])
+@ token_required
 def delete(current_user, id):
     if current_user.role != 'STAFF':
         return make_response(jsonify({"message": "You are not authorized to perform this action."}), 401)
@@ -227,8 +223,8 @@ def delete(current_user, id):
     return make_response(jsonify({"message": "Vehicle deleted successfully."}), 200)
 
 
-@bp.route('/vehicles/task_history', methods=['GET'])
-@token_required
+@ bp.route('/vehicles/task_history', methods=['GET'])
+@ token_required
 def task_history(lpn):
     """
     Note: This is not the way I would have preferred to do this. I would have preferred to have an endpoint of the structure:
@@ -237,24 +233,41 @@ def task_history(lpn):
     that includes the date and time and the user who caught it." Putting the license plate number in the URL would have too
     clunky for my liking, so I decided to put it in the request body instead.
     """
-    lpn = request.get_json().get('license_plate_number')
-    v = Vehicle.query.filter_by(license_plate_number=lpn).first()
-    tasks = VehicleTask.query.filter_by(vehicle_id=v.id).all()
-    users = {
-        user.id: user for user in
-        User.query.filter(User.id.in_(
-            [task.user_id for task in tasks]
-        )).all()
-    }
+    try:
+        lpn = request.get_json().get('license_plate_number')
 
-    task_history = []
-    for task in tasks:
-        d = {
-            "task_id": task.id,
-            "taken_by": users[task.user_id].username,
-            "start_time": task.start_time,
-            "end_time": task.end_time,
-        }
-        task_history.append(d)
+        if not lpn:
+            return make_response(jsonify({"message": "Request body must contain license_plate_number."}), 400)
+    except:
+        return make_response(jsonify({"message": "Improperly formatted request body!"}), 400)
 
-    return make_response(jsonify({f'task_history_for_vehicle {id}': task_history}), 200)
+    vehicle = Vehicle.query.filter_by(license_plate_number=lpn).first()
+
+    if not vehicle:
+        return make_response(jsonify({"message": "Vehicle not found."}), 404)
+
+    task_history = [{
+        "task_id": task.id,
+        "taken_by": task.user.username,
+        "start_time": task.start_time,
+        "end_time": task.end_time,
+    } for task in vehicle.tasks]
+
+    return make_response(jsonify({"task_history": task_history}), 200)
+
+
+def create_staff_user():
+    """
+    Since this whole system is a demo, this code is here to provide a staff user for testing.
+    After starting the app for the first time, the ability to log in with a staff role with
+    the following credentials will be available:
+        username: staffUser
+        password: staffpass
+    """
+    staff_user = User.query.filter_by(username='staffUser').first()
+
+    if staff_user is None:
+        staff_user = User(username='staffUser', password=generate_password_hash(
+            'staffpass'), role='STAFF')
+        db.session.add(staff_user)
+        db.session.commit()
