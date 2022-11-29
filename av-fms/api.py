@@ -210,8 +210,11 @@ def delete(current_user, id):
     if not vehicle:
         return make_response(jsonify({"message": "Vehicle not found."}), 404)
 
-    db.session.delete(vehicle)
-    db.session.commit()
+    try:
+        db.session.delete(vehicle)
+        db.session.commit()
+    except:
+        return make_response(jsonify({"message": "Vehicle could not be deleted."}), 400)
 
     return make_response(jsonify({"message": "Vehicle deleted successfully."}), 200)
 
