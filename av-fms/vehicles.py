@@ -18,13 +18,8 @@ def index():
         return redirect(url_for('auth.login'))
 
     vehicles = Vehicle.query.all()
-    users = {
-        user.id: user for user in
-        User.query.filter(User.id.in_(
-            [vehicle.user_id for vehicle in vehicles if vehicle.user_id]
-        )).all()
-    }
-    return render_template('vehicles/index.html', vehicles=vehicles, users=users)
+
+    return render_template('vehicles/index.html', vehicles=vehicles)
 
 
 @bp.route('/create', methods=('GET', 'POST'))

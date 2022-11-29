@@ -19,7 +19,7 @@
             {% if v.user_id == g.user.id %}
             <a class="action" href="{{ url_for('vehicles.return_vehicle', vid=v.id) }}">Return</a>
             {% else %}
-            <p>Taken by {{ users[v.user_id].username }}.</p>
+            <p>Taken by {{ v.user.username }}.</p>
             {% endif %}
             {% endif %}
             <a class="action" href="{{ url_for('vehicles.task_history', vid=v.id) }}">Task History</a>
