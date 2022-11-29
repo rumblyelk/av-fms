@@ -97,14 +97,11 @@ def take_vehicle():
         return redirect(url_for('auth.login'))
 
     error = None
-    user_vehicle = Vehicle.query.filter_by(
-        user_id=g.user.id).first()
-    if user_vehicle:
-        error = f'You already have taken the {user_vehicle.manufacturer} | {user_vehicle.license_plate_number}.'
+    if g.user.vehicle:
+        error = f'You already have taken the {g.user.vehicle.manufacturer} | {g.user.vehicle.license_plate_number}.'
 
-    if error is None:
+    try:
         vid = request.args.get('vid')
-
         vehicle = Vehicle.query.filter_by(id=vid).first()
         vehicle.user_id = g.user.id
         vehicle.available = False
@@ -112,6 +109,10 @@ def take_vehicle():
         new_task = VehicleTask(vehicle_id=vehicle.id, user_id=g.user.id)
         db.session.add(new_task)
         db.session.commit()
+    except:
+        error = 'Something went wrong.'
+    else:
+        return redirect(url_for('vehicles.index'))
 
     if error:
         flash(error)
