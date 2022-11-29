@@ -158,17 +158,15 @@ def task_history():
     if not g.user:
         return redirect(url_for('auth.login'))
 
-    vid = request.args.get('vid')
+    error = None
+    try:
+        vid = request.args.get('vid')
+        tasks = VehicleTask.query.filter_by(vehicle_id=vid).all()
+        vehicle = Vehicle.query.filter_by(id=vid).first()
+    except:
+        error = 'Vehicle not found.'
 
-    vehicle = Vehicle.query.filter_by(id=vid).first()
+    if error:
+        flash(error)
 
-    tasks = VehicleTask.query.filter_by(vehicle_id=vid).all()
-
-    users = {
-        user.id: user for user in
-        User.query.filter(User.id.in_(
-            [task.user_id for task in tasks]
-        )).all()
-    }
-
-    return render_template('vehicles/task_history.html', vehicle=vehicle, tasks=tasks, users=users)
+    return render_template('vehicles/task_history.html', tasks=tasks, vehicle=vehicle)
