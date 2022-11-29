@@ -47,6 +47,8 @@ def create():
                 db.session.commit()
             except:
                 error = f'Vehicle is already registered.'
+            else:
+                return redirect(url_for('vehicles.index'))
 
         if error:
             flash(error)
@@ -80,6 +82,8 @@ def delete():
             db.session.commit()
         except:
             error = "Vehicle could not be deleted."
+        else:
+            return redirect(url_for('vehicles.index'))
 
     if error:
         flash(error)
