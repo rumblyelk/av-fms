@@ -71,14 +71,15 @@ def delete():
     vid = request.args.get('vid')
     vehicle = Vehicle.query.filter_by(id=vid).first()
 
+    if not vehicle:
+        error = "Vehicle not found."
+
     if error is None:
         try:
             db.session.delete(vehicle)
             db.session.commit()
-        except Exception:
+        except:
             error = "Vehicle could not be deleted."
-        else:
-            return redirect(url_for('vehicles.index'))
 
     if error:
         flash(error)
