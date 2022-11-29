@@ -125,13 +125,16 @@ def return_vehicle():
     if not g.user:
         return redirect(url_for('auth.login'))
 
-    vid = request.args.get('vid')
-
-    vehicle = Vehicle.query.filter_by(id=vid).first()
-
     error = None
+    try:
+        vid = request.args.get('vid')
+        vehicle = Vehicle.query.filter_by(id=vid).first()
+    except:
+        error = 'Vehicle not found.'
+    if vehicle.available:
+        error = f'Vehicle is already available.'
     if g.user.id != vehicle.user_id:
-        error = "Only the user who took the vehicle can return it."
+        error = 'You can only return your own vehicle.'
 
     if error is None:
         vehicle.user_id = None
