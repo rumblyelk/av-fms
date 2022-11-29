@@ -189,19 +189,12 @@ def create(current_user):
     except:
         return make_response(jsonify({"message": "Improperly formatted request body!"}), 400)
 
-    vehicle = Vehicle.query.filter_by(
-        manufacturer=man, license_plate_number=lpn
-    ).first()
-
-    if vehicle:
-        return make_response(jsonify({"message": "Vehicle already exists."}), 406)
-
-    new_vehicle = Vehicle(
-        manufacturer=man,
-        license_plate_number=lpn,
-    )
-    db.session.add(new_vehicle)
-    db.session.commit()
+    try:
+        vehicle = Vehicle(man, lpn)
+        db.session.add(vehicle)
+        db.session.commit()
+    except:
+        return make_response(jsonify({"message": "Vehicle is already registered."}), 400)
 
     return make_response(jsonify({"message": "Vehicle created successfully."}), 200)
 
