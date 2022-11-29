@@ -26,29 +26,27 @@ def index():
 def create():
     if not g.user:
         return redirect(url_for('auth.login'))
+    error = None
+    if g.user.role != 'STAFF':
+        error = 'You do not have permission to create vehicles.'
 
     if request.method == 'POST':
-        error = None
-        if g.user.role != 'STAFF':
-            error = 'You do not have permission to create vehicles.'
+        try:
+            man = request.form['manufacturer']
+            lpn = request.form['license_plate_number']
 
-        man = request.form['manufacturer']
-        lpn = request.form['license_plate_number']
-
-        if not man:
-            error = 'Manufacturer is required.'
-        elif not lpn:
-            error = 'License plate number is required.'
+            if not man or not lpn:
+                error = 'Manufacturer and license plate number are required.'
+        except:
+            error = 'Something went wrong.'
 
         if error is None:
             try:
                 new_vehicle = Vehicle(man, lpn)
                 db.session.add(new_vehicle)
                 db.session.commit()
-            except Exception:
-                error = f'Vehicle "{lpn}" is already registered.'
-            else:
-                return redirect(url_for('vehicles.index'))
+            except:
+                error = f'Vehicle is already registered.'
 
         if error:
             flash(error)
